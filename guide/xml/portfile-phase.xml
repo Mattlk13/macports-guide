@@ -2127,8 +2127,10 @@ configure.cppflags-delete   -I${prefix}/lib/db44</programlisting>
           available on 10.5 and 10.6, and <option>clang</option> is available
           on 10.6 and later.</para>
 
-          <para>Only use it if a port really needs a different
-          compiler.</para>
+          <para>Only use it if a port really needs a specific different
+          compiler. In many situations, the requirements system described in the <link
+          xlink:href="https://trac.macports.org/wiki/CompilerSelection">CompilerSelection</link>
+          page on the wiki is more flexible.</para>
 
           <itemizedlist>
             <listitem>
@@ -2456,7 +2458,8 @@ configure.post_args OPT="-D__DARWIN_UNIX03"</programlisting>
                 <para>Default: </para>
                 <para>(PowerPC Tiger) <literal>-isysroot ${developer_dir}/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc</literal></para>
                 <para>(Intel Tiger / Leopard) <literal>-arch i386 -arch ppc</literal></para>
-                <para>(Snow Leopard and later) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Snow Leopard through High Sierra) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Big Sur and later) <literal>-arch arm64 -arch x86_64</literal></para>
               </listitem>
 
               <listitem>
@@ -2504,7 +2507,8 @@ configure.post_args OPT="-D__DARWIN_UNIX03"</programlisting>
                 <para>Default: </para>
                 <para>(PowerPC Tiger) <literal>-isysroot ${developer_dir}/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc</literal></para>
                 <para>(Intel Tiger / Leopard) <literal>-arch i386 -arch ppc</literal></para>
-                <para>(Snow Leopard and later) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Snow Leopard through High Sierra) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Big Sur and later) <literal>-arch arm64 -arch x86_64</literal></para>
               </listitem>
 
               <listitem>
@@ -2528,7 +2532,8 @@ configure.post_args OPT="-D__DARWIN_UNIX03"</programlisting>
                 <para>Default: </para>
                 <para>(PowerPC Tiger) <literal>-Wl,-syslibroot,${developer_dir}/SDKs/MacOSX10.4u.sdk -arch i386 -arch ppc</literal></para>
                 <para>(Intel Tiger / Leopard) <literal>-arch i386 -arch ppc</literal></para>
-                <para>(Snow Leopard and later) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Snow Leopard through High Sierra) <literal>-arch x86_64 -arch i386</literal></para>
+                <para>(Big Sur and later) <literal>-arch arm64 -arch x86_64</literal></para>
               </listitem>
 
               <listitem>

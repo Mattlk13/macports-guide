@@ -82,7 +82,13 @@ include::portgroup-gnustep.adoc[]
 
 :leveloffset: +1
 
-include::portgroup-haskell.adoc[]
+include::portgroup-golang.adoc[]
+
+:leveloffset: -1
+
+:leveloffset: +1
+
+include::portgroup-java.adoc[]
 
 :leveloffset: -1
 

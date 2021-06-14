@@ -36,7 +36,7 @@
       <listitem>
         <para>The name of the port. To avoid special interpretation by shells
         and the like, names should contain only alphanumeric characters,
-        underscores, dashes or dots. For projects whose proper names contain
+        underscores, dashes and periods. For projects whose proper names contain
         <quote>+</quote> characters, change these to <quote>x</quote> (e.g.,
         <quote>libstdc++</quote> becomes <quote>libstdcxx</quote>).</para>
 
@@ -48,7 +48,28 @@
       <term>version</term>
 
       <listitem>
-        <para>The version of the ported software.</para>
+        <para>The version of the software. Version numbers are often dotted
+        decimals, though some projects may use other formats.</para>
+
+        <para>The version keyword should adhere as closely as possible to the
+        format used by the upstream project (e.g., as reported by a program's
+        <literal>-v</literal> or <literal>--version</literal> flag or on the
+        project's web site), omitting any preceding <literal>v</literal> or
+        other extraneous characters that are not part of the version number.
+        Especially, the version should not be misformatted merely to accommodate
+        an unusual distfile name. For example, if the distfile name is
+        <literal>foo-v1_2_3.tar.gz</literal> and the project reports its version
+        as <literal>v1.2.3</literal>, the version keyword should be set to
+        <literal>1.2.3</literal> and distname should be overridden as needed
+        (ideally by transforming the version using a procedure such as
+        <code>string map</code>).</para>
+
+        <para>When updating the version of a port that installs a dynamic
+        library, check (by examining the second line of output from the
+        <userinput>otool -L</userinput> command run on the library before and
+        after upgrading) whether its install name has changed. If it has,
+        increase the revision of every port that links with the library to
+        rebuild it with the new library.</para>
 
         <programlisting>version             1.23.45</programlisting>
       </listitem>
@@ -58,14 +79,92 @@
       <term>revision</term>
 
       <listitem>
-        <para>Optional keyword (default is 0) that is used to track port
-        revisions. It should not be incremented for port revisions unless it
-        would benefit users to upgrade an installed port, and cleared when the
-        port is updated to a newer version.</para>
+        <para>An optional integer (the default is <literal>0</literal>) that is
+        incremented when a port is updated independently of the version of the
+        software. The revision line usually follows the version line.</para>
 
-        <para>It should be used if a bug in the Portfile was found and all
-        installations of this port have to be updated. If the change only
-        affects new installations, there is no need to increase it.</para>
+        <para>In Portfiles that have subports, it is often appropriate for each
+        subport (including the main port) to have a separate revision line.
+        (This does not usually apply to Portfiles for Perl, PHP, Python, or Ruby
+        modules which create numerous similar subports for the same version of
+        the software.)</para>
+
+        <para>It is recommended to set the revision in all ports, even if the
+        revision is 0. This makes it easier for other developers to see where to
+        increase the revision in your port, should that need arise. This is
+        especially helpful for Portfiles that have subports.</para>
+
+        <para>When increasing the revision in a Portfile with subports, consider
+        carefully which of the subports (possibly including the main port) need
+        to have their revisions increased.</para>
+
+        <para>When increasing the revision in a Portfile that does not have any
+        revision lines yet, take a moment to check if the Portfile has
+        subports.</para>
+
+        <para>Just like when a port's version increases, a port is considered
+        outdated when its revision increases. To avoid causing users to rebuild
+        ports unnecessarily, don't increase the revision unless doing so would
+        result in a change for users who already have the ports
+        installed.</para>
+
+        <para>Some examples of situations in which a port's revision should be
+        increased:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>changing configure arguments or build flags or any other
+            change that will cause the installed files to be different</para>
+          </listitem>
+          <listitem>
+            <para>installing additional files, such as documentation, or
+            removing any files which had previously been installed</para>
+          </listitem>
+          <listitem>
+            <para>changing the names or locations of any installed files</para>
+          </listitem>
+          <listitem>
+            <para>adding a dependency to depends_lib or depends_run</para>
+          </listitem>
+          <listitem>
+            <para>a library dependency's install_name has changed</para>
+          </listitem>
+          <listitem>
+            <para>removing a variant that a user might have installed</para>
+          </listitem>
+          <listitem>
+            <para>adding a variant name to default_variants</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Some examples of situations in which a port's revision should not
+        be increased:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para>fixing a build failure</para>
+          </listitem>
+          <listitem>
+            <para>adding a dependency to depends_fetch, depends_extract,
+            depends_build, or depends_test</para>
+          </listitem>
+          <listitem>
+            <para>setting or changing the port's license</para>
+          </listitem>
+          <listitem>
+            <para>adding a new non-default variant</para>
+          </listitem>
+          <listitem>
+            <para>removing a variant name from default_variants</para>
+          </listitem>
+          <listitem>
+            <para>changing comments or whitespace in the Portfile</para>
+          </listitem>
+          <listitem>
+            <para>any other change to the Portfile that does not change the
+            files it installs</para>
+          </listitem>
+        </itemizedlist>
 
         <programlisting>revision            1</programlisting>
       </listitem>
@@ -75,21 +174,40 @@
       <term>epoch</term>
 
       <listitem>
-        <para>An optional keyword (default value is 0) that must be used when
-        a port is updated to a version that is numerically less than the
-        previous version, for example 1.10 -&gt; 1.2 or 20070928 -&gt; 1.0.
-        Some Portfile authors have used large epoch values that look like a
-        date, but there is no reason to do so. The epoch is simply an unsigned
-        integer, and the only requirement is that it never be decreased. Remember
-        that once set, it can never be removed because it takes precedence over
-        version and revision.</para>
+        <para>An optional integer (the default is <literal>0</literal>) that
+        must be increased when a port is updated to a version that appears
+        (according to the <code>vercmp</code> procedure's version number
+        comparison algorithm) to be less than the previous version. For example,
+        updating from <literal>2.0-rc1</literal> to <literal>2.0</literal>, or
+        from <literal>1.10</literal> to <literal>1.2</literal>, or from
+        <literal>20070928</literal> to <literal>1.0</literal>.</para>
+
+        <para>The purpose of increasing the epoch is to cause MacPorts to
+        consider a port to be outdated, even if that wouldn't otherwise be the
+        case due to the specific version numbers. Don't set the epoch unless
+        it's required. In most ports, the version number advances according to
+        the normal dotted-decimal sequence, so most ports will never have a need
+        to set the epoch.</para>
+
+        <para>Some Portfile authors have used large epoch values that look like
+        dates in YYYYMMDD format (e.g., <literal>20091231</literal>). When it is
+        necessary to increase the epoch in such ports, the new epoch can be set
+        to the current date. It is not recommended to use this format when
+        adding an epoch to a port that does not already have one; instead, just
+        set the epoch to <literal>1</literal>, and when needing to increase an
+        existing small epoch, increase it by 1.</para>
 
         <programlisting>epoch               1</programlisting>
 
         <note>
-          <para>An epoch is not needed for most ports. If a port's version
-          numbers advance in normal dotted-decimal sequence, there is no reason
-          to add an epoch.</para>
+          <para>A port's epoch can never be decreased. Removing the epoch from
+          the port would decrease it to its default value of
+          <literal>0</literal>, so once added to a port the epoch can also never
+          be removed. When adding an epoch, take extra care to ensure that it is
+          necessary, since a mistakenly added epoch cannot be undone. In
+          Portfiles that have subports with different software versions,
+          consider whether the epoch needs to be increased in all subports or
+          only in some of them.</para>
         </note>
       </listitem>
     </varlistentry>
@@ -168,9 +286,9 @@
       <term>description</term>
 
       <listitem>
-        <para>A one-sentence description of the ported software.</para>
+        <para>A short sentence fragment describing the software.</para>
 
-        <programlisting>description         A classic shooter arcade game.</programlisting>
+        <programlisting>description         a classic shooter arcade game</programlisting>
       </listitem>
     </varlistentry>
 
@@ -178,12 +296,44 @@
       <term>long_description</term>
 
       <listitem>
-        <para>A long description of the ported software. Break long lines with
-        escaped newlines.</para>
+        <para>One or more sentences describing the software.</para>
 
-        <programlisting>long_description    A classic shooter arcade game derived from \
+        <para>The long description can be based on a description provided by the
+        upstream project (e.g., in its readme or on its web site) but avoid
+        repeating information already present elsewhere in the Portfile, such as
+        the software's license (see the <varname>license</varname> keyword) or
+        the platforms on which it runs (see the <varname>platforms</varname>
+        keyword), and avoid including information irrelevant to a MacPorts user,
+        such as compilation instructions or other steps the Portfile has already
+        performed for the user. More specific usage instructions are best left
+        to the <varname>notes</varname> keyword.</para>
+
+        <para>If a port provides a program that is different from the port name,
+        it can be a good idea to include the program name in the long
+        description so that a user could find it by searching.</para>
+
+        <para>Long descriptions are usually a single paragraph. MacPorts will
+        word-wrap long lines to the terminal width as needed. Break long lines
+        with escaped newlines for better legibility within the Portfile. If
+        literal newlines need to be displayed to the user, they can be inserted
+        using <literal>\n</literal>. Place the <literal>\n</literal> at the
+        beginning of the next line, not at the end of the previous line. To
+        create a new paragraph, insert two newlines.</para>
+
+        <para>Sometimes the port's name and short description are reused as part
+        of the long description. When referencing the
+        <varname>description</varname> keyword (or any other list keyword with
+        more than one item), it should be preceded with the expand
+        operator.</para>
+
+        <programlisting>long_description    ${name} is {*}${description} derived from \
                     the game alien-munchers.  Not suitable for \
                     children under two years old.</programlisting>
+        <programlisting>long_description    foobar provides the following programs: \
+                    \n \
+                    \n* foo, a lorem ipsum utility \
+                    \n* bar, a high-performance amet consectetur \
+                    \n* baz, an eiusmod tempor converter</programlisting>
       </listitem>
     </varlistentry>
 
@@ -191,9 +341,20 @@
       <term>homepage</term>
 
       <listitem>
-        <para>Port application's homepage.</para>
+        <para>The software's primary web site.</para>
 
-        <programlisting>homepage            https://www.example.org/apps</programlisting>
+        <para>Usually the homepage should be a URL that does not redirect to
+        another URL. For example, if an http URL redirects to an https URL, list
+        the https URL. Or if a URL without a trailing slash redirects to the URL
+        with the trailing slash, list the URL with the trailing slash. If the
+        project advertises a short URL that redirects to a longer URL, it is
+        acceptable to list the short URL despite the redirect.</para>
+
+        <para>When the homepage is just a hostname with no path component, don't
+        include a trailing slash.</para>
+
+        <programlisting>homepage            https://www.example.org/apps/</programlisting>
+        <programlisting>homepage            https://www.example.com</programlisting>
       </listitem>
     </varlistentry>
 
@@ -201,13 +362,52 @@
       <term>platforms</term>
 
       <listitem>
-        <para>A list of the platforms on which the port has been tested.
-	Required, but not interpreted in any way by the software at this time; it is purely informational for users.
-	Possible values: <code>darwin</code> (= <code>macosx</code> or <code>puredarwin</code>), <code>macosx</code>,
-	<code>puredarwin</code>, <code>freebsd</code>, <code>linux</code>, <code>sunos</code>, <code>netbsd</code>.
-	In general, it can just be set to <code>darwin</code>. (<code>puredarwin</code> is an OS based on Apple's
-	open-source Darwin releases without any of Apple's proprietary bits.) See also <varname>os.platform</varname>.
-	</para>
+        <para>A list of the platforms on which the port is expected to work.
+        Required, but not interpreted in any way by MacPorts at this time; it is
+        purely informational for users. Possible values:</para>
+
+        <itemizedlist>
+          <listitem>
+            <para><literal>darwin</literal> (equivalent to specifying both
+            <literal>macosx</literal> and <literal>puredarwin</literal>)</para>
+          </listitem>
+          <listitem>
+            <para><literal>macosx</literal> (macOS as distributed by
+            Apple)</para>
+          </listitem>
+          <listitem>
+            <para><literal>puredarwin</literal> (the open-source Darwin OS
+            without Apple's proprietary components)</para>
+          </listitem>
+          <listitem>
+            <para><literal>freebsd</literal></para>
+          </listitem>
+          <listitem>
+            <para><literal>linux</literal></para>
+          </listitem>
+          <listitem>
+            <para><literal>netbsd</literal></para>
+          </listitem>
+          <listitem>
+            <para><literal>openbsd</literal></para>
+          </listitem>
+          <listitem>
+            <para><literal>solaris</literal></para>
+          </listitem>
+          <listitem>
+            <para><literal>sunos</literal></para>
+          </listitem>
+        </itemizedlist>
+
+        <para>Ports for software that does not require macOS-specific features
+        should use <literal>darwin</literal>. Most ports use this value on the
+        presumption that they would work on Pure Darwin, even if that has not
+        been attempted. Ports for software that is known to require
+        macOS-specific features should set this to <literal>macosx</literal>.
+        Including the xcode portgroup will set this to <literal>macosx</literal>
+        automatically.</para>
+
+        <para>See also <varname>os.platform</varname>.</para>
 
         <programlisting>platforms           darwin</programlisting>
       </listitem>
@@ -218,7 +418,7 @@
 
       <listitem>
         <para>The CPU architectures for which this port can be built. Archs currently
-        supported by macOS are: i386, ppc, ppc64, x86_64. If this option is not
+        supported by macOS are: arm64, i386, ppc, ppc64, x86_64. If this option is not
         set, it is assumed that the port can build for all archs. If a port does not
         install any architecture-specific files, use the special value
         <option>noarch</option>.</para>
@@ -229,8 +429,8 @@
         supported_archs contains ppc, in which case the port will be built in
         32-bit mode.</para>
 
-        <programlisting>supported_archs           i386 ppc</programlisting>
-        <programlisting>supported_archs           noarch</programlisting>
+        <programlisting>supported_archs     i386 ppc</programlisting>
+        <programlisting>supported_archs     noarch</programlisting>
       </listitem>
     </varlistentry>
 
@@ -255,8 +455,8 @@
         just leave out the version number entirely since it implies all
         versions.</para>
 
-        <programlisting>license           GPL-3</programlisting>
-        <programlisting>license           {freetype GPL}</programlisting>
+        <programlisting>license             GPL-3</programlisting>
+        <programlisting>license             {freetype GPL}</programlisting>
       </listitem>
     </varlistentry>
 
@@ -272,8 +472,8 @@
         work is formed, or should not prevent binary distribution for any
         other reason, add its name to this list.
         </para>
-        <programlisting>license_noconflict openssl</programlisting>
-        <programlisting>license_noconflict readline gdbm</programlisting>
+        <programlisting>license_noconflict  openssl</programlisting>
+        <programlisting>license_noconflict  readline gdbm</programlisting>
       </listitem>
     </varlistentry>
 
@@ -296,8 +496,8 @@
         Xcode/CLT. Build systems that ignore the environment may
         accidentally use Xcode which will cause a failure in trace mode.
         </para>
-        <programlisting>use_xcode no</programlisting>
-        <programlisting>use_xcode yes</programlisting>
+        <programlisting>use_xcode           no</programlisting>
+        <programlisting>use_xcode           yes</programlisting>
       </listitem>
     </varlistentry>
 
